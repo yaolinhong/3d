@@ -1,4 +1,5 @@
 import './index.styl';
+import { useThrottle } from '../../components/useThrottle';
 import React from 'react';
 import * as THREE from './libs/three.module';
 import { GLTFLoader } from './libs/GLTFLoader';
@@ -191,6 +192,7 @@ export default class Metaverse extends React.Component {
 
     // 添加狐狸模型
     var mixers = [], clip1, clip2;
+    var speed=1;
     const gltfLoader = new GLTFLoader(loadingManager);
     gltfLoader.load(foxModel, mesh => {
       mesh.scene.traverse(child => {
@@ -208,9 +210,32 @@ export default class Metaverse extends React.Component {
       var mixer = new THREE.AnimationMixer(player);
       clip1 = mixer.clipAction(mesh.animations[0]);
       clip2 = mixer.clipAction(mesh.animations[1]);
-      clip2.timeScale = 1.6;
+      clip2.timeScale = 1.0;
       mixers.push(mixer);
     });
+
+  window.addEventListener("keydown",event => {
+      console.log('🚀 - Metaverse - event.key:', event.key,event)
+    if (event.code === "Space") {
+      speedUp();
+      return;
+    }
+    // do something
+  })
+  window.addEventListener("keyup",event => {
+    if (event.code === "Space") {
+      speed = 1;
+      clip2.timeScale = 1.0;
+      return;
+    }
+    // do something
+  })
+  const speedUp = useThrottle(()=>{
+    if(speed<3.0)speed+=0.4;
+    console.log(speed,"speed")
+    clip2.timeScale = speed * 1.0;
+  },200)
+
 
     // 基地
     const shelterGeometry = new THREE.BoxBufferGeometry(0.15, 2, 0.15);
@@ -246,9 +271,10 @@ export default class Metaverse extends React.Component {
     // 轮盘控制器
     var setup = { forward: 0, turn: 0 };
     new JoyStick({ onMove: (forward, turn) => {
+      console.log('🚀 - Metaverse - newJoyStick - forward, turn,speed:', forward, turn,speed)
       setup.forward = forward;
       setup.turn = -turn;
-    }});
+    }}); 
 
     const updateDrive = (forward = setup.forward, turn = setup.turn) => {
       let maxSteerVal = 0.05;
@@ -368,7 +394,7 @@ export default class Metaverse extends React.Component {
         {this.state.showLoading ? (<div className='loading'>
           <div className='box'>
             <p className='progress'>{this.state.loadingProcess} %</p>
-            <p className='description'><span>2545光年</span>之外的<span>开普勒1028星系</span>，有一颗色彩斑斓的宜居星球，星际移民必须穿戴<span>基地</span>发放的防辐射服才能生存。<span>阿狸</span>驾驶星际飞行器降临此地，快帮它在限定时间内<span>使用轮盘移动</span>找到<span>基地</span>获取防辐射服吧！</p>
+            <p className='description'><span>2545光年</span>之外的<span>开普勒1028星系</span>，有一颗色彩斑斓的宜居星球，星际移民必须穿戴<span>基地</span>发放的防辐射服才能生存。<span>阿狸</span>驾驶星际飞行器降临此地，快帮它在限定时间内<span>使用轮盘移动</span>找到<span>基地</span>获取防辐射服吧！<br/><strong>按住空格，加速跑动!</strong></p>
             <button className='start_button' style={{'visibility': this.state.loadingProcess === 100 ? 'visible' : 'hidden'}} onClick={this.startGame}>开始游戏</button>
           </div>
         </div>) : '' }
